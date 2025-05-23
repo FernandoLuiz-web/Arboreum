@@ -1,42 +1,57 @@
 package main
 
 import (
+	"arboreum/internal/agent"
 	"context"
-	"log"
+	"fmt"
 	"os"
+	"path/filepath"
+)
 
-	"github.com/firebase/genkit/go/ai"
-	"github.com/firebase/genkit/go/genkit"
-	"github.com/firebase/genkit/go/plugins/googlegenai"
-	"github.com/joho/godotenv"
+const (
+	PromptInputText = `Você é um assistente de IA que ajuda a refinar prompts para o Gemini AI. Por favor refine o seguinte prompt para torná-lo mais claro e eficaz: preciso de um secretário.`
+	PromptDir       = "prompt"
+	PromptFileName  = "second_twin.prompt"
 )
 
 func main() {
 	ctx := context.Background()
 
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Erro ao carregar o arquivo .env: %v", err)
-	}
-
-	// Obtém a chave da API do Gemini do ambiente
-	geminiAPIKey := os.Getenv("GEMINI_API_KEY")
-	if geminiAPIKey == "" {
-		log.Fatal("GEMINI_API_KEY não definida no ambiente")
-	}
-
-	// Inicializa o Genkit com o plugin Google AI e o Gemini 2.0 Flash.
-	g, err := genkit.Init(ctx,
-		genkit.WithPlugins(&googlegenai.GoogleAI{}),
-		genkit.WithDefaultModel("googleai/gemini-2.0-flash"),
-	)
+	refinedPrompt, err := runFirstTwin(ctx, PromptInputText)
 	if err != nil {
-		log.Fatalf("Não foi possível inicializar o Genkit: %v", err)
+		panic(fmt.Errorf("erro ao refinar prompt: %w", err))
 	}
 
-	resp, err := genkit.Generate(ctx, g, ai.WithPrompt("Qual é o sentido da vida?"))
+	err = writePromptToFile(refinedPrompt)
 	if err != nil {
-		log.Fatalf("Não foi possível gerar a resposta do modelo: %v", err)
+		panic(fmt.Errorf("erro ao escrever o prompt refinado: %w", err))
 	}
 
-	log.Println(resp.Text())
+	result, err := runSecondTwin(ctx)
+	if err != nil {
+		panic(fmt.Errorf("erro ao executar segundo gêmeo: %w", err))
+	}
+
+	fmt.Println("\nResposta do segundo gêmeo:")
+	fmt.Println(result)
+}
+
+func runFirstTwin(ctx context.Context, input string) (string, error) {
+	twin := agent.NewFirstTwin(ctx, input)
+	return twin.RefinePrompt()
+}
+
+func writePromptToFile(prompt string) error {
+	if err := os.MkdirAll(PromptDir, 0755); err != nil {
+		return err
+	}
+
+	promptFilePath := filepath.Join(PromptDir, PromptFileName)
+
+	return os.WriteFile(promptFilePath, []byte(prompt), 0644)
+}
+
+func runSecondTwin(ctx context.Context) (string, error) {
+	twin := agent.NewSecondTwin(ctx)
+	return twin.MakeAgent()
 }
