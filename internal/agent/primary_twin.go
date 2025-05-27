@@ -1,7 +1,7 @@
 package agent
 
 import (
-	"arboreum/internal/config"
+	"arboreum/internal/model"
 	"context"
 	"fmt"
 	"log"
@@ -10,7 +10,7 @@ import (
 
 	"github.com/firebase/genkit/go/ai"
 	"github.com/firebase/genkit/go/genkit"
-	"github.com/firebase/genkit/go/plugins/googlegenai"
+	"github.com/firebase/genkit/go/plugins/ollama"
 	"github.com/joho/godotenv"
 )
 
@@ -22,11 +22,13 @@ type FirstTwin struct {
 }
 
 var (
-	loadEnvOnceFT sync.Once
+	loadEnvOnceFT  sync.Once
+	firstTwinModel ai.Model
 )
 
 func NewFirstTwin(ctx context.Context, prompt string) *FirstTwin {
 	loadEnvOnceFT.Do(loadEnvOfFirstTwin)
+	ollamaPlugin := &ollama.Ollama{ServerAddress: "http://127.0.0.1:11434"}
 
 	twin := &FirstTwin{
 		prompt: prompt,
@@ -34,9 +36,9 @@ func NewFirstTwin(ctx context.Context, prompt string) *FirstTwin {
 	}
 
 	twin.gen, twin.initErr = genkit.Init(ctx,
-		genkit.WithPlugins(&googlegenai.GoogleAI{}),
-		genkit.WithDefaultModel(config.LLM_NAME),
-	)
+		genkit.WithPlugins(ollamaPlugin))
+
+	firstTwinModel = model.DefineFirstTwinModel(ollamaPlugin, twin.gen)
 
 	return twin
 }
@@ -46,7 +48,7 @@ func (ft *FirstTwin) RefinePrompt() (string, error) {
 		return "", fmt.Errorf("erro na inicialização do Genkit: %w", ft.initErr)
 	}
 
-	resp, err := genkit.Generate(ft.ctx, ft.gen, ai.WithPrompt(ft.prompt))
+	resp, err := genkit.Generate(ft.ctx, ft.gen, ai.WithModel(firstTwinModel), ai.WithPrompt(ft.prompt))
 	if err != nil {
 		return "", fmt.Errorf("erro ao gerar resposta da IA: %w", err)
 	}
