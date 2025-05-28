@@ -8,12 +8,6 @@ import (
 	"path/filepath"
 )
 
-const (
-	PromptInputText = `Você é um assistente de IA que ajuda a refinar prompts para o Gemini AI. Por favor refine o seguinte prompt para torná-lo mais claro e eficaz: preciso de um secretário.`
-	PromptDir       = "prompt"
-	PromptFileName  = "secondary_twin.prompt"
-)
-
 func main() {
 	ctx := context.Background()
 
@@ -42,11 +36,14 @@ func runFirstTwin(ctx context.Context) (string, error) {
 }
 
 func writePromptToFile(prompt string) error {
-	if err := os.MkdirAll(PromptDir, 0755); err != nil {
+	promptDir := "prompt"
+	promptFileName := "secondary_twin.prompt"
+
+	if err := os.MkdirAll(promptDir, 0755); err != nil {
 		return err
 	}
 
-	promptFilePath := filepath.Join(PromptDir, PromptFileName)
+	promptFilePath := filepath.Join(promptDir, promptFileName)
 
 	return os.WriteFile(promptFilePath, []byte(prompt), 0644)
 }
