@@ -11,13 +11,13 @@ import (
 const (
 	PromptInputText = `Você é um assistente de IA que ajuda a refinar prompts para o Gemini AI. Por favor refine o seguinte prompt para torná-lo mais claro e eficaz: preciso de um secretário.`
 	PromptDir       = "prompt"
-	PromptFileName  = "second_twin.prompt"
+	PromptFileName  = "secondary_twin.prompt"
 )
 
 func main() {
 	ctx := context.Background()
 
-	refinedPrompt, err := runFirstTwin(ctx, PromptInputText)
+	refinedPrompt, err := runFirstTwin(ctx)
 	if err != nil {
 		panic(fmt.Errorf("erro ao refinar prompt: %w", err))
 	}
@@ -36,8 +36,8 @@ func main() {
 	fmt.Println(result)
 }
 
-func runFirstTwin(ctx context.Context, input string) (string, error) {
-	twin := agent.NewFirstTwin(ctx, input)
+func runFirstTwin(ctx context.Context) (string, error) {
+	twin := agent.NewFirstTwin(ctx)
 	return twin.RefinePrompt()
 }
 

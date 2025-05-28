@@ -16,7 +16,6 @@ import (
 )
 
 type FirstTwin struct {
-	prompt  string
 	ctx     context.Context
 	gen     *genkit.Genkit
 	model   ai.Model
@@ -27,17 +26,18 @@ var (
 	loadEnvOnceFT sync.Once
 )
 
-func NewFirstTwin(ctx context.Context, prompt string) *FirstTwin {
+func NewFirstTwin(ctx context.Context) *FirstTwin {
 	loadEnvOnceFT.Do(loadEnvOfFirstTwin)
 
 	ollamaPlugin := &ollama.Ollama{ServerAddress: config.LOCALHOST_OLLAMA_SERVER}
 
 	twin := &FirstTwin{
-		prompt: prompt,
-		ctx:    ctx,
+		ctx: ctx,
 	}
 	twin.gen, twin.initErr = genkit.Init(ctx,
-		genkit.WithPlugins(ollamaPlugin))
+		genkit.WithPlugins(ollamaPlugin),
+		genkit.WithPromptDir("prompt"),
+	)
 
 	twin.model = model.DefineFirstTwinModel(ollamaPlugin, twin.gen)
 
@@ -49,10 +49,12 @@ func (ft *FirstTwin) RefinePrompt() (string, error) {
 		return "", fmt.Errorf("erro na inicialização do Genkit: %w", ft.initErr)
 	}
 
-	resp, err := genkit.Generate(ft.ctx, ft.gen,
-		ai.WithModel(ft.model),
-		ai.WithMessages(model.DefineMessageAi(ft.prompt)),
-	)
+	initPrompt := genkit.LookupPrompt(ft.gen, "primary_twin")
+	// resp, err := genkit.Generate(ft.ctx, ft.gen,
+	// 	ai.WithModel(ft.model),
+	// )
+
+	resp, err := initPrompt.Execute(ft.ctx, ai.WithModel(ft.model))
 
 	if err != nil {
 		return "", fmt.Errorf("erro ao gerar resposta da IA: %w", err)

@@ -44,7 +44,7 @@ func (ft *SecondTwin) MakeAgent() (string, error) {
 		return "", fmt.Errorf("erro na inicialização do Genkit: %w", ft.initErr)
 	}
 
-	initPrompt := genkit.LookupPrompt(ft.gen, "second_twin")
+	initPrompt := genkit.LookupPrompt(ft.gen, "secondary_twin")
 	resp, err := initPrompt.Execute(ft.ctx)
 	if err != nil {
 		return "", fmt.Errorf("erro ao executar o prompt: %w", err)
