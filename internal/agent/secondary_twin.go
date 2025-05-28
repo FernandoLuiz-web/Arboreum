@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"arboreum/internal/config"
 	"context"
 	"fmt"
 	"log"
@@ -31,7 +32,7 @@ func NewSecondTwin(ctx context.Context) *SecondTwin {
 
 	twin.gen, twin.initErr = genkit.Init(ctx,
 		genkit.WithPlugins(&googlegenai.GoogleAI{}),
-		genkit.WithDefaultModel("googleai/gemini-2.0-flash"),
+		genkit.WithDefaultModel(config.LLM_SECONDARY_TWIN_NAME),
 		genkit.WithPromptDir("prompt"),
 	)
 
