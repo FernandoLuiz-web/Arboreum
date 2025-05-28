@@ -12,7 +12,7 @@ func DefineFirstTwinModel(o *ollama.Ollama, g *genkit.Genkit) ai.Model {
 	return o.DefineModel(g,
 		ollama.ModelDefinition{
 			Name: config.LLM_PRIMARY_TWIN_NAME,
-			Type: "chat",
+			Type: "chat", // Define o tipo do modelo como "chat" para diálogos, aceita "generate" para geração.
 		},
 		&ai.ModelInfo{
 			Supports: &ai.ModelSupports{

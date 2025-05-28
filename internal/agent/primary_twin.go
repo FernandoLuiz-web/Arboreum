@@ -15,7 +15,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type FirstTwin struct {
+type PrimaryTwin struct {
 	ctx     context.Context
 	gen     *genkit.Genkit
 	model   ai.Model
@@ -26,17 +26,17 @@ var (
 	loadEnvOnceFT sync.Once
 )
 
-func NewFirstTwin(ctx context.Context) *FirstTwin {
-	loadEnvOnceFT.Do(loadEnvOfFirstTwin)
+func NewPrimaryTwin(ctx context.Context) *PrimaryTwin {
+	loadEnvOnceFT.Do(loadEnvOfPrimaryTwin)
 
 	ollamaPlugin := &ollama.Ollama{ServerAddress: config.LOCALHOST_OLLAMA_SERVER}
 
-	twin := &FirstTwin{
+	twin := &PrimaryTwin{
 		ctx: ctx,
 	}
 	twin.gen, twin.initErr = genkit.Init(ctx,
 		genkit.WithPlugins(ollamaPlugin),
-		genkit.WithPromptDir("prompt"),
+		genkit.WithPromptDir(config.DOTPROMPT_DIR),
 	)
 
 	twin.model = model.DefineFirstTwinModel(ollamaPlugin, twin.gen)
@@ -44,30 +44,24 @@ func NewFirstTwin(ctx context.Context) *FirstTwin {
 	return twin
 }
 
-func (ft *FirstTwin) RefinePrompt() (string, error) {
+func (ft *PrimaryTwin) RefinePrompt() (string, error) {
 	if ft.initErr != nil {
-		return "", fmt.Errorf("erro na inicialização do Genkit: %w", ft.initErr)
+		return "", fmt.Errorf(config.PANIC_GENKIT_INIT_ERROR, ft.initErr)
 	}
-
-	initPrompt := genkit.LookupPrompt(ft.gen, "primary_twin")
-	// resp, err := genkit.Generate(ft.ctx, ft.gen,
-	// 	ai.WithModel(ft.model),
-	// )
-
+	prompt_file := config.DOTPROMPT_PRIMARY_TWIN_PROMPT_FILE[:len(config.DOTPROMPT_PRIMARY_TWIN_PROMPT_FILE)-len(".prompt")]
+	initPrompt := genkit.LookupPrompt(ft.gen, prompt_file)
 	resp, err := initPrompt.Execute(ft.ctx, ai.WithModel(ft.model))
-
 	if err != nil {
-		return "", fmt.Errorf("erro ao gerar resposta da IA: %w", err)
+		return "", fmt.Errorf(config.PANIC_EXECUTE_PROMPT_ERROR, err)
 	}
-
 	return resp.Text(), nil
 }
 
-func loadEnvOfFirstTwin() {
+func loadEnvOfPrimaryTwin() {
 	if err := godotenv.Load(); err != nil {
-		log.Panic("Aviso: .env não encontrado.")
+		log.Panic(config.PANIC_ENV_NOT_FOUND)
 	}
 	if os.Getenv("GEMINI_API_KEY") == "" {
-		log.Fatal("GEMINI_API_KEY não definida no ambiente")
+		log.Fatal(config.PANIC_GEMINI_API_KEY_MISSING)
 	}
 }
