@@ -1,6 +1,7 @@
 package main
 
 import (
+	"arboreum/internal/service"
 	"context"
 	"fmt"
 )
@@ -24,4 +25,15 @@ func (a *App) startup(ctx context.Context) {
 // Greet returns a greeting for the given name
 func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
+}
+
+// twin comunication function
+func twin() {
+	ctx := context.Background()
+	service := service.NewTwinService(ctx)
+	response, err := service.ProcessPrompt()
+	if err != nil {
+		panic(err)
+	}
+	println("Resposta do modelo:", response)
 }

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"arboreum/internal/service"
-	"context"
 	"embed"
 
 	"github.com/wailsapp/wails/v2"
@@ -11,16 +9,6 @@ import (
 )
 
 var assets embed.FS
-
-func twin() {
-	ctx := context.Background()
-	service := service.NewTwinService(ctx)
-	response, err := service.ProcessPrompt()
-	if err != nil {
-		panic(err)
-	}
-	println("Resposta do modelo:", response)
-}
 
 func main() {
 	app := NewApp()
